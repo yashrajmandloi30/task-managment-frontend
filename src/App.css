@@ -1,0 +1,59 @@
+.drag-over {
+  @apply bg-blue-50 border-2 border-blue-300 border-dashed;
+}
+
+.drag-image {
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.task-card.dragging {
+  @apply opacity-50 cursor-grabbing;
+}
+
+/* Custom scrollbar for task columns */
+.task-column {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.task-column::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-column::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.task-column::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.task-column::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth transitions */
+.task-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.task-card:active {
+  cursor: grabbing;
+}
+
+/* Column hover effects */
+.task-column {
+  transition: background-color 0.2s ease;
+}
+
+/* Empty state styles */
+.empty-state {
+  @apply text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg transition-colors;
+}
+
+.empty-state.drag-over {
+  @apply border-primary-400 bg-primary-50;
+}
