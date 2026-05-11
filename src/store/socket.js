@@ -166,4 +166,4 @@ export const markMessagesRead = (conversationId, chatType) => {
   if (socket) {
     socket.emit('mark-messages-read', { conversationId, chatType });
   }
-};
+}; 

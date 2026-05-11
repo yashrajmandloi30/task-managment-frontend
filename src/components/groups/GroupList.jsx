@@ -18,7 +18,7 @@ const GroupList = () => {
     // Direct API call to verify data
     const loadGroups = async () => {
       try {
-        const response = await axiosInstance.get('/group');
+        const response = await axiosInstance.get('/api/group');
         console.log("API Response:", response);
         // Handle different response formats
         let groupsData = [];
@@ -110,7 +110,7 @@ const GroupList = () => {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center shadow-sm">
-                      <Users size={22} className="text-white" />
+                      <Users size={22} className="text-black" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-800">{group.name}</h3>

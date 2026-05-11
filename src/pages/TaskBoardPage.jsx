@@ -3,7 +3,7 @@ import TaskBoard from '../components/tasks/TaskBoard';
 
 const TaskBoardPage = () => {
   return (
-    <div className='bg-red-900'> 
+    <div> 
      <TaskBoard />
      </div>
   )

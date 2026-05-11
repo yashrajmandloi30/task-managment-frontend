@@ -12,14 +12,9 @@ const ChatWindow = ({ chatId, chatType }) => {
   const [filePreview, setFilePreview] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-
   const { messages, loading } = useSelector((state) => state.chat);
   const { user } = useSelector((state) => state.auth);
-  
-  // Safely get messages for this chat
   const chatMessages = messages && messages[chatId] ? messages[chatId] : [];
-
-  // ✅ Join chat room when component mounts
   useEffect(() => {
     if (chatId && chatType) {
       if (chatType === 'group') {
@@ -29,7 +24,6 @@ const ChatWindow = ({ chatId, chatType }) => {
       }
     }
   }, [chatId, chatType]);
-
   useEffect(() => {
     if (chatId && chatType) {
       dispatch(fetchMessages({ chatId, chatType }));

@@ -1,12 +1,20 @@
 // src/store/slices/uiSlice.js
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
+
+// Get initial sidebar state based on screen size
+const getInitialSidebarState = () => {
+  if (typeof window !== 'undefined') {
+    return window.innerWidth >= 1024;
+  }
+  return true; // Default to open on server
+};
 
 const uiSlice = createSlice({
-  name: "ui",
+  name: 'ui',
   initialState: {
-    sidebarOpen: true,
+    sidebarOpen: getInitialSidebarState(),
     modalOpen: false,
-    modalType: null, // 'createTask', 'editTask', 'createGroup', 'editGroup'
+    modalType: null,
     modalData: null,
     isLoading: false,
   },
@@ -14,9 +22,15 @@ const uiSlice = createSlice({
     toggleSidebar: (state) => {
       state.sidebarOpen = !state.sidebarOpen;
     },
+    openSidebar: (state) => {
+      state.sidebarOpen = true;
+    },
+    closeSidebar: (state) => {
+      state.sidebarOpen = false;
+    },
     openModal: (state, action) => {
       state.modalOpen = true;
-      state.modalType = action.payload.type; // ✅ Important: type should be set
+      state.modalType = action.payload.type;
       state.modalData = action.payload.data || null;
     },
     closeModal: (state) => {
@@ -30,6 +44,13 @@ const uiSlice = createSlice({
   },
 });
 
-export const { toggleSidebar, openModal, closeModal, setLoading } =
-  uiSlice.actions;
+export const { 
+  toggleSidebar, 
+  openSidebar, 
+  closeSidebar, 
+  openModal, 
+  closeModal, 
+  setLoading 
+} = uiSlice.actions;
+
 export default uiSlice.reducer;

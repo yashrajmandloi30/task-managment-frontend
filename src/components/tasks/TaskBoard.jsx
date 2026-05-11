@@ -51,7 +51,7 @@ const TaskBoard = () => {
         <h2 className="text-2xl font-bold text-gray-800">Task Board</h2>
         <button
           onClick={() => dispatch(openModal({ type: 'createTask' }))}
-          className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <Plus size={20} />
           <span>Create Task</span>
