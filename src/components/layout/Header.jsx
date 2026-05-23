@@ -85,7 +85,7 @@ const Header = () => {
                 className="flex items-center space-x-2 sm:space-x-3 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-sm">
-                  <span className="text-white text-sm sm:text-base font-medium">
+                  <span className="text-black text-sm sm:text-base font-medium">
                     {user?.name?.charAt(0).toUpperCase() || 'U'}
                   </span>
                 </div>

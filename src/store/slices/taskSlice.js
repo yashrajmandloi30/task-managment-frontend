@@ -1,3 +1,4 @@
+// src/store/slices/taskSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as taskService from '../../services/taskService';
 import toast from 'react-hot-toast';
@@ -7,9 +8,10 @@ export const fetchTasks = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await taskService.getTasks();
-      return response.data;
+      // ✅ ensure response.data.data is array
+      return response.data || [];
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tasks');
     }
   }
 );
@@ -19,10 +21,13 @@ export const createTask = createAsyncThunk(
   async (taskData, { rejectWithValue }) => {
     try {
       const response = await taskService.createTask(taskData);
+      // ✅ response.data.data should be the new task object
+      const newTask = response.data?.data;
+      if (!newTask) throw new Error('No task data received');
       toast.success('Task created successfully');
-      return response.data;
+      return newTask;
     } catch (error) {
-      toast.error(error.response?.data?.message);
+      toast.error(error.response?.data?.message || error.message);
       return rejectWithValue(error.response?.data?.message);
     }
   }
@@ -34,7 +39,7 @@ export const updateTask = createAsyncThunk(
     try {
       const response = await taskService.updateTask(id, data);
       toast.success('Task updated successfully');
-      return response.data;
+      return response.data?.data;
     } catch (error) {
       toast.error(error.response?.data?.message);
       return rejectWithValue(error.response?.data?.message);
@@ -47,7 +52,7 @@ export const updateTaskStatus = createAsyncThunk(
   async ({ id, status }, { rejectWithValue }) => {
     try {
       const response = await taskService.updateTaskStatus(id, status);
-      return response.data;
+      return response.data?.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
     }
@@ -83,7 +88,7 @@ export const reorderTasks = createAsyncThunk(
 const taskSlice = createSlice({
   name: 'tasks',
   initialState: {
-    tasks: [],
+    tasks: [],        // ✅ always array
     loading: false,
     error: null,
     filters: {
@@ -101,52 +106,65 @@ const taskSlice = createSlice({
     updateTaskStatusLocally: (state, action) => {
       const { id, status } = action.payload;
       const task = state.tasks.find(t => t._id === id);
-      if (task) {
-        task.status = status;
-      }
+      if (task) task.status = status;
     },
   },
   extraReducers: (builder) => {
     builder
+      // Fetch tasks
       .addCase(fetchTasks.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
         state.loading = false;
-        state.tasks = action.payload;
+        state.tasks = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.tasks = [];
+      })
+      // Create task
+      .addCase(createTask.pending, (state) => {
+        state.loading = true;
       })
       .addCase(createTask.fulfilled, (state, action) => {
-        state.tasks.push(action.payload);
+        state.loading = false;
+        if (action.payload && action.payload._id) {
+          state.tasks.push(action.payload);
+        }
       })
+      .addCase(createTask.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update task
       .addCase(updateTask.fulfilled, (state, action) => {
-        const index = state.tasks.findIndex(t => t._id === action.payload._id);
-        if (index !== -1) {
-          state.tasks[index] = action.payload;
+        if (action.payload && action.payload._id) {
+          const index = state.tasks.findIndex(t => t._id === action.payload._id);
+          if (index !== -1) state.tasks[index] = action.payload;
         }
       })
+      // Update status
       .addCase(updateTaskStatus.fulfilled, (state, action) => {
-        const index = state.tasks.findIndex(t => t._id === action.payload._id);
-        if (index !== -1) {
-          state.tasks[index] = action.payload;
+        if (action.payload && action.payload._id) {
+          const index = state.tasks.findIndex(t => t._id === action.payload._id);
+          if (index !== -1) state.tasks[index] = action.payload;
         }
       })
+      // Delete task
       .addCase(deleteTask.fulfilled, (state, action) => {
         state.tasks = state.tasks.filter(t => t._id !== action.payload);
       })
+      // Reorder tasks
       .addCase(reorderTasks.fulfilled, (state, action) => {
-        // Update order of tasks
-        const { tasks } = action.payload;
-        tasks.forEach((taskId, index) => {
+        const taskIds = action.payload;
+        taskIds.forEach((taskId, idx) => {
           const task = state.tasks.find(t => t._id === taskId);
-          if (task) {
-            task.order = index;
-          }
+          if (task) task.order = idx;
         });
-        state.tasks.sort((a, b) => a.order - b.order);
+        state.tasks.sort((a, b) => (a.order || 0) - (b.order || 0));
       });
   },
 });

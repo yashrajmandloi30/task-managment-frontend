@@ -12,11 +12,11 @@ export const getTaskById = async (id) => {
 
 export const createTask = async (taskData) => {
   const response = await axiosInstance.post('/api/task', taskData);
-  return response.data;
+  return response.data.data;
 };
 
 export const updateTask = async (id, taskData) => {
-  const response = await axiosInstance.put(`/api/task/${id}`, taskData);
+  const response = await axiosInstance.patch(`/api/task/${id}`, taskData);
   return response.data;
 };
 

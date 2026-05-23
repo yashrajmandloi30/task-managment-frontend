@@ -10,7 +10,9 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import GroupsPage from './pages/GroupPage';
 import { initSocket, disconnectSocket } from './store/socket';
-import { checkAuth } from './store/slices/authSlice';
+import { checkAuth, fetchAllUsers } from './store/slices/authSlice';
+import { fetchGroups } from './store/slices/groupSlice';
+import { fetchTasks } from './store/slices/taskSlice';
 
 function App() {
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
@@ -18,6 +20,9 @@ function App() {
 
   useEffect(() => {
     dispatch(checkAuth());
+    dispatch(fetchAllUsers());
+    dispatch(fetchGroups());
+    dispatch(fetchTasks());
   }, [dispatch]);
 
   useEffect(() => {

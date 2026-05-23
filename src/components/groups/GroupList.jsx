@@ -13,6 +13,7 @@ const GroupList = () => {
   const { groups, loading } = useSelector((state) => state.groups);
   const { user } = useSelector((state) => state.auth);
   const [localGroups, setLocalGroups] = useState([]);
+    const currentUserRole = user?.role;
 
   useEffect(() => {
     // Direct API call to verify data
@@ -75,13 +76,13 @@ const GroupList = () => {
           <h2 className="text-2xl font-bold text-gray-800">My Groups</h2>
           <p className="text-gray-500 text-sm mt-1">Create and manage your collaboration groups</p>
         </div>
-        <button
+       {currentUserRole==="admin"&& <button
           onClick={handleCreateGroup}
           className="flex items-center space-x-2 px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
         >
           <Plus size={20} />
           <span>Create Group</span>
-        </button>
+        </button>}
       </div>
 
       {displayGroups?.length === 0 ? (
@@ -120,13 +121,14 @@ const GroupList = () => {
                     </div>
                   </div>
                   <div className="flex space-x-1">
-                    <button
+                   {currentUserRole ==="admin" && <button
                       onClick={(e) => handleEditGroup(group, e)}
                       className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-primary-600 transition-colors"
                       title="Edit Group"
                     >
                       <Edit size={16} />
                     </button>
+}
                     {group.createdBy === user?._id && (
                       <button
                         onClick={(e) => handleDeleteGroup(group._id, e)}

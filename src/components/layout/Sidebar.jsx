@@ -15,18 +15,26 @@ import {
 import { toggleSidebar, closeSidebar } from '../../store/slices/uiSlice';
 import { logout } from '../../store/slices/authSlice';
 
+// Helper to generate a consistent pastel color based on group name
+const getGroupColor = (name) => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = hash % 360;
+  return `hsl(${hue}, 70%, 80%)`;
+};
+
 const Sidebar = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   
-  // ✅ ALL HOOKS MUST BE CALLED AT THE TOP - before any conditional returns
   const { sidebarOpen } = useSelector((state) => state.ui);
   const { groups } = useSelector((state) => state.groups);
   const { user } = useSelector((state) => state.auth);
   
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
-  // Check screen size
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
@@ -43,7 +51,6 @@ const Sidebar = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [dispatch, sidebarOpen]);
 
-  // Close sidebar on mobile when route changes
   useEffect(() => {
     if (isMobile && sidebarOpen) {
       dispatch(closeSidebar());
@@ -149,7 +156,7 @@ const Sidebar = () => {
               </NavLink>
             ))}
 
-            {/* Groups Section */}
+            {/* Groups Section - now showing first character icon */}
             {groups && groups.length > 0 && (
               <div className="pt-4 mt-4 border-t">
                 {sidebarOpen && (
@@ -174,7 +181,13 @@ const Sidebar = () => {
                       }
                       title={!sidebarOpen ? group.name : ''}
                     >
-                      <MessageSquare size={20} className="flex-shrink-0" />
+                      {/* First character of group name inside a circle */}
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-gray-700 flex-shrink-0"
+                        style={{ backgroundColor: getGroupColor(group.name) }}
+                      >
+                        {group.name.charAt(0).toUpperCase()}
+                      </div>
                       {sidebarOpen && <span className="text-sm truncate">{group.name}</span>}
                       {!sidebarOpen && (
                         <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">

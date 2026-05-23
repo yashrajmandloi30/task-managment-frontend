@@ -1,19 +1,22 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
 import TaskCard from './TaskCard';
-import { updateTaskStatus } from '../../store/slices/taskSlice';
-import { useDispatch } from 'react-redux';
 
-const TaskColumn = ({ title, status, tasks, onDragEnd }) => {
-  const dispatch = useDispatch();
-
+const TaskColumn = ({ title, status, tasks, onDrop, currentUserRole, onEditTask, onDeleteTask }) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'TASK',
-    drop: (item) => {
-      if (item.status !== status) {
-        dispatch(updateTaskStatus({ id: item.id, status }));
+    canDrop: (item) => {
+      // Find the task being dragged
+      const task = tasks.find(t => t._id === item.id);
+      // If task is completed, prevent dropping anywhere
+      if (task?.status === 'completed') return false;
+      // If deadline passed and not completed, prevent drop
+      if (task?.deadline && new Date(task.deadline) < new Date() && task.status !== 'completed') {
+        return false;
       }
+      return true;
     },
+    drop: (item) => onDrop(item.id, status),
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
@@ -22,20 +25,25 @@ const TaskColumn = ({ title, status, tasks, onDragEnd }) => {
   return (
     <div
       ref={drop}
-      className={`bg-gray-100 rounded-lg p-4 min-h-[500px] transition-colors ${
-        isOver ? 'bg-gray-200' : ''
+      className={`bg-gray-50 rounded-lg p-4 min-h-[500px] transition-all ${
+        isOver ? 'ring-2 ring-blue-400 bg-blue-50' : ''
       }`}
     >
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-3">
         <h3 className="font-semibold text-gray-700">{title}</h3>
-        <span className="text-sm text-gray-500 bg-white px-2 py-1 rounded-full">
+        <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">
           {tasks.length}
         </span>
       </div>
-
       <div className="space-y-3">
-        {tasks.map((task) => (
-          <TaskCard key={task._id} task={task} />
+        {tasks.map(task => (
+          <TaskCard
+            key={task._id}
+            task={task}
+            onEdit={onEditTask}
+            onDelete={onDeleteTask}
+            currentUserRole={currentUserRole}
+          />
         ))}
         {tasks.length === 0 && (
           <div className="text-center text-gray-400 text-sm py-8">
