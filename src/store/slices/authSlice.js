@@ -41,7 +41,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
 });
 
 export const fetchAllUsers = createAsyncThunk('auth/fetchAllUsers', async () => {
-  const response = await axiosInstance.get('api/user/users');
+  const response = await axiosInstance.get('/user/users');
   return response.data.data;
 });
 

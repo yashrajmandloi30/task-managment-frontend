@@ -2,7 +2,7 @@
 import axiosInstance from './axiosInstance';
 
 export const getGroups = async () => {
-  const response = await axiosInstance.get('/api/group');
+  const response = await axiosInstance.get('/group');
   // ✅ If response is already the array, return it directly
   // If it's wrapped in apiResponse, extract data
   if (response.data && Array.isArray(response.data)) {
@@ -15,7 +15,7 @@ export const getGroups = async () => {
 };
 
 export const createGroup = async (groupData) => {
-  const response = await axiosInstance.post('/api/group', groupData);
+  const response = await axiosInstance.post('/group', groupData);
   if (response.data && response.data.data) {
     return { data: response.data.data };
   }
@@ -23,7 +23,7 @@ export const createGroup = async (groupData) => {
 };
 
 export const updateGroup = async (id, groupData) => {
-  const response = await axiosInstance.patch(`/api/group/${id}`, groupData);
+  const response = await axiosInstance.patch(`/group/${id}`, groupData);
   if (response.data && response.data.data) {
     return { data: response.data.data };
   }
@@ -31,6 +31,6 @@ export const updateGroup = async (id, groupData) => {
 };
 
 export const deleteGroup = async (id) => {
-  const response = await axiosInstance.delete(`/api/group/${id}`);
+  const response = await axiosInstance.delete(`/group/${id}`);
   return response;
 };

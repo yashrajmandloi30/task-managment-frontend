@@ -2,24 +2,15 @@ import React from 'react';
 import { useDrop } from 'react-dnd';
 import TaskCard from './TaskCard';
 
-const TaskColumn = ({ title, status, tasks, onDrop, currentUserRole, onEditTask, onDeleteTask }) => {
+const TaskColumn = ({ title, status, tasks, onDrop, currentUserRole, currentUserId, onEditTask, onDeleteTask }) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'TASK',
-    canDrop: (item) => {
-      // Find the task being dragged
-      const task = tasks.find(t => t._id === item.id);
-      // If task is completed, prevent dropping anywhere
-      if (task?.status === 'completed') return false;
-      // If deadline passed and not completed, prevent drop
-      if (task?.deadline && new Date(task.deadline) < new Date() && task.status !== 'completed') {
-        return false;
+    drop: (item) => {
+      if (item?.id) {
+        onDrop(item.id, status);
       }
-      return true;
     },
-    drop: (item) => onDrop(item.id, status),
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-    }),
+    collect: (monitor) => ({ isOver: !!monitor.isOver() }),
   }));
 
   return (
@@ -43,12 +34,11 @@ const TaskColumn = ({ title, status, tasks, onDrop, currentUserRole, onEditTask,
             onEdit={onEditTask}
             onDelete={onDeleteTask}
             currentUserRole={currentUserRole}
+            currentUserId={currentUserId}
           />
         ))}
         {tasks.length === 0 && (
-          <div className="text-center text-gray-400 text-sm py-8">
-            No tasks
-          </div>
+          <div className="text-center text-gray-400 text-sm py-8">No tasks</div>
         )}
       </div>
     </div>

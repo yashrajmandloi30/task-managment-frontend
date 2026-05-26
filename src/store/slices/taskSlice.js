@@ -3,36 +3,46 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as taskService from '../../services/taskService';
 import toast from 'react-hot-toast';
 
+// Helper to extract error message
+const getErrorMessage = (error) => {
+  return error.response?.data?.message || error.message || 'Something went wrong';
+};
+
+// Fetch tasks
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
   async (_, { rejectWithValue }) => {
     try {
       const response = await taskService.getTasks();
-      // ✅ ensure response.data.data is array
-      return response.data || [];
+      // Ensure response.data.data is an array
+      return response.data?.data || [];
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tasks');
+      return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
+// Create task
 export const createTask = createAsyncThunk(
   'tasks/createTask',
   async (taskData, { rejectWithValue }) => {
     try {
       const response = await taskService.createTask(taskData);
-      // ✅ response.data.data should be the new task object
       const newTask = response.data?.data;
-      if (!newTask) throw new Error('No task data received');
+      if (!newTask || !newTask._id) {
+        throw new Error('Invalid response from server');
+      }
       toast.success('Task created successfully');
       return newTask;
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-      return rejectWithValue(error.response?.data?.message);
+      const msg = getErrorMessage(error);
+      toast.error(msg);
+      return rejectWithValue(msg);
     }
   }
 );
 
+// Update task
 export const updateTask = createAsyncThunk(
   'tasks/updateTask',
   async ({ id, data }, { rejectWithValue }) => {
@@ -41,38 +51,47 @@ export const updateTask = createAsyncThunk(
       toast.success('Task updated successfully');
       return response.data?.data;
     } catch (error) {
-      toast.error(error.response?.data?.message);
-      return rejectWithValue(error.response?.data?.message);
+      const msg = getErrorMessage(error);
+      toast.error(msg);
+      return rejectWithValue(msg);
     }
   }
 );
 
+// Update status (drag & drop)
 export const updateTaskStatus = createAsyncThunk(
   'tasks/updateTaskStatus',
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const response = await taskService.updateTaskStatus(id, status);
+      // Ensure id is string, not object
+      const taskId = typeof id === 'string' ? id : id?._id || String(id);
+      const response = await taskService.updateTaskStatus(taskId, status);
       return response.data?.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message);
+      const msg = error.response?.data?.message || error.message;
+      toast.error(msg);
+      return rejectWithValue(msg);
     }
   }
 );
 
+// Delete task
 export const deleteTask = createAsyncThunk(
   'tasks/deleteTask',
   async (id, { rejectWithValue }) => {
     try {
       await taskService.deleteTask(id);
-      toast.success('Task deleted successfully');
+      toast.success('Task deleted');
       return id;
     } catch (error) {
-      toast.error(error.response?.data?.message);
-      return rejectWithValue(error.response?.data?.message);
+      const msg = getErrorMessage(error);
+      toast.error(msg);
+      return rejectWithValue(msg);
     }
   }
 );
 
+// Reorder tasks (optional)
 export const reorderTasks = createAsyncThunk(
   'tasks/reorderTasks',
   async (tasks, { rejectWithValue }) => {
@@ -80,7 +99,9 @@ export const reorderTasks = createAsyncThunk(
       await taskService.reorderTasks(tasks);
       return tasks;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message);
+      const msg = getErrorMessage(error);
+      toast.error(msg);
+      return rejectWithValue(msg);
     }
   }
 );
@@ -88,13 +109,10 @@ export const reorderTasks = createAsyncThunk(
 const taskSlice = createSlice({
   name: 'tasks',
   initialState: {
-    tasks: [],        // ✅ always array
+    tasks: [],
     loading: false,
     error: null,
-    filters: {
-      status: 'all',
-      priority: 'all',
-    },
+    filters: { status: 'all', priority: 'all' },
   },
   reducers: {
     setFilters: (state, action) => {
@@ -133,6 +151,8 @@ const taskSlice = createSlice({
         state.loading = false;
         if (action.payload && action.payload._id) {
           state.tasks.push(action.payload);
+        } else {
+          console.warn('createTask.fulfilled received invalid payload', action.payload);
         }
       })
       .addCase(createTask.rejected, (state, action) => {
@@ -140,28 +160,52 @@ const taskSlice = createSlice({
         state.error = action.payload;
       })
       // Update task
+      .addCase(updateTask.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(updateTask.fulfilled, (state, action) => {
+        state.loading = false;
         if (action.payload && action.payload._id) {
-          const index = state.tasks.findIndex(t => t._id === action.payload._id);
-          if (index !== -1) state.tasks[index] = action.payload;
+          const idx = state.tasks.findIndex(t => t._id === action.payload._id);
+          if (idx !== -1) state.tasks[idx] = action.payload;
         }
+      })
+      .addCase(updateTask.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
       // Update status
+      .addCase(updateTaskStatus.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(updateTaskStatus.fulfilled, (state, action) => {
+        state.loading = false;
         if (action.payload && action.payload._id) {
-          const index = state.tasks.findIndex(t => t._id === action.payload._id);
-          if (index !== -1) state.tasks[index] = action.payload;
+          const idx = state.tasks.findIndex(t => t._id === action.payload._id);
+          if (idx !== -1) state.tasks[idx] = action.payload;
         }
       })
+      .addCase(updateTaskStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       // Delete task
+      .addCase(deleteTask.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(deleteTask.fulfilled, (state, action) => {
+        state.loading = false;
         state.tasks = state.tasks.filter(t => t._id !== action.payload);
       })
-      // Reorder tasks
+      .addCase(deleteTask.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Reorder
       .addCase(reorderTasks.fulfilled, (state, action) => {
         const taskIds = action.payload;
-        taskIds.forEach((taskId, idx) => {
-          const task = state.tasks.find(t => t._id === taskId);
+        taskIds.forEach((id, idx) => {
+          const task = state.tasks.find(t => t._id === id);
           if (task) task.order = idx;
         });
         state.tasks.sort((a, b) => (a.order || 0) - (b.order || 0));

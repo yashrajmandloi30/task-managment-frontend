@@ -9,35 +9,30 @@ const priorityColors = {
   high: 'bg-red-100 text-red-800',
 };
 
-const TaskCard = ({ task, onEdit, onDelete, currentUserRole }) => {
+const TaskCard = ({ task, onEdit, onDelete, currentUserRole, currentUserId }) => {
+  if (!task || !task._id) return null;
+
   const isDeadlinePassed = task.deadline && new Date(task.deadline) < new Date();
   const isAdmin = currentUserRole === 'admin';
+  const isAssigned = task.assignedTo?.some(u => u._id === currentUserId);
 
-  // Determine if this task can be dragged
   const canDrag = () => {
-    // 1. Completed tasks are never draggable
+    // Completed tasks never draggable
     if (task.status === 'completed') return false;
-    
-    // 2. If deadline passed, cannot drag (unless already completed - already filtered)
+    // Deadline passed tasks not draggable
     if (isDeadlinePassed) return false;
-   
-    if (!isAdmin) {
-      // Non-admin can only drag tasks that are assigned to them
-      const isAssigned = task.assignedTo?.some(u => u._id === currentUserRole?._id); // Need actual user id
-      if (!isAssigned) return false;
-      // Non-admin cannot drag from review or completed (already completed filtered)
-      if (task.status === 'review') return false;
-    }
-    return true;
+    // Admin can drag any non‑completed task
+    if (isAdmin) return true;
+    // Assigned user can drag only pending and in-progress tasks
+    if (isAssigned && (task.status === 'pending' || task.status === 'in-progress')) return true;
+    return false;
   };
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'TASK',
-    item: { id: task._id, status: task.status },
+    item: { id: task._id },
     canDrag: canDrag(),
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
+    collect: (monitor) => ({ isDragging: !!monitor.isDragging() }),
   }));
 
   const isExpired = isDeadlinePassed && task.status !== 'completed';
@@ -62,18 +57,14 @@ const TaskCard = ({ task, onEdit, onDelete, currentUserRole }) => {
           </div>
         )}
       </div>
-      {task.description && (
-        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{task.description}</p>
-      )}
+      {task.description && <p className="text-sm text-gray-600 mb-2">{task.description}</p>}
       <div className="flex flex-wrap gap-2 mt-2">
         <span className={`text-xs px-2 py-1 rounded ${priorityColors[task.priority]}`}>
-          <Flag size={12} className="inline mr-1" />
-          {task.priority}
+          <Flag size={12} className="inline mr-1" /> {task.priority}
         </span>
         {task.assignedTo?.length > 0 && (
           <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
-            <Users size={12} className="inline mr-1" />
-            {task.assignedTo.length}
+            <Users size={12} className="inline mr-1" /> {task.assignedTo.length}
           </span>
         )}
       </div>
@@ -83,12 +74,8 @@ const TaskCard = ({ task, onEdit, onDelete, currentUserRole }) => {
           {format(new Date(task.deadline), 'MMM dd, yyyy')}
         </div>
       )}
-      {isExpired && (
-        <p className="text-xs text-red-500 mt-2">⚠️ Deadline passed – cannot move</p>
-      )}
-      {task.status === 'completed' && (
-        <p className="text-xs text-green-600 mt-2">✓ Completed – locked</p>
-      )}
+      {isExpired && <p className="text-xs text-red-500 mt-2">⚠️ Deadline passed – cannot move</p>}
+      {task.status === 'completed' && <p className="text-xs text-green-600 mt-2">✓ Completed – locked</p>}
     </div>
   );
 };
